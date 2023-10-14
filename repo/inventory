@@ -1,0 +1,10 @@
+[web_servers]
+172.23.252.211 #
+#apache_package=httpd php_package=php
+
+[db_servers]
+172.23.252.213 
+#apache_package=httpd php_package=php
+
+[workstations]
+172.23.252.213
