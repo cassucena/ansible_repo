@@ -2,8 +2,8 @@
   tags: apache,centos,httpd
   yum:
     name:
-      - httpd
-      - php
+      - "{{ apache_package_name }}"
+      - "{{ php_package_name }}"
     state: latest
   when: ansible_distribution == "CentOS"
 
@@ -13,7 +13,7 @@
   - centos
   - apache
   service:
-    name: httpd
+    name: "{{ apache_service }}"
     state: started
     enabled: yes
   when: ansible_distribution == "CentOS"
@@ -21,7 +21,7 @@
 - name: Add firewall rule port 80
   command: firewall-cmd --add-port=80/tcp
 
-- name: change e-amil address admin
+- name: change e-mail address admin
   tags:
   - apache
   - centos
@@ -29,17 +29,10 @@
   lineinfile:
     path: /etc/httpd/conf/httpd.conf
     regexp: '^ServerAdmin'
-    line: ServerAdmin somebody@somebody.net
+    line: ServerAdmin assucena@somebody.com
   when: ansible_distribution == "CentOS"
-  register: httpd
+  notify: restart_apache
 
-
-- name: restart httpd (CentOS)
-  tags: apache,centos,httpd
-  service:
-    name: httpd
-    state: restarted
-  when: httpd.changed
 
 - name: copy default html file for site
   tags:
