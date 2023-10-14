@@ -1,0 +1,67 @@
+- name: Install apache and php packages
+  tags: apache,centos,httpd
+  yum:
+    name:
+      - httpd
+      - php
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: Start httpd service (CentOS)
+  tags:
+  - httpd
+  - centos
+  - apache
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+  when: ansible_distribution == "CentOS"
+
+- name: Add firewall rule port 80
+  command: firewall-cmd --add-port=80/tcp
+
+- name: change e-amil address admin
+  tags:
+  - apache
+  - centos
+  - httpd
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^ServerAdmin'
+    line: ServerAdmin somebody@somebody.net
+  when: ansible_distribution == "CentOS"
+  register: httpd
+
+
+- name: restart httpd (CentOS)
+  tags: apache,centos,httpd
+  service:
+    name: httpd
+    state: restarted
+  when: httpd.changed
+
+- name: copy default html file for site
+  tags:
+  - apache
+  - httpd
+  copy:
+    src: /home/cassucena/ansible_repo/repo/playbooks/roles/web_servers/files/default_site.html
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: 0644
+
+
+
+
+
+
+
+
+
+
+
+
+
+

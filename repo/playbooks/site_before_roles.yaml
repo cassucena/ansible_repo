@@ -1,0 +1,136 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (CentOS)
+    tags: always
+    yum:
+      update_cache: yes
+    when: ansible_distribution == "CentOS"
+
+- hosts: all
+  become: true
+  tasks:
+  
+  - name: add ssh key for simone
+    tags: always
+    authorized_key:
+      user: simone
+      state: present
+      key: "{{ lookup('file', '/home/cassucena/.ssh/ansible.pub') }}"
+      
+
+
+- hosts: workstations 
+  become: true
+  tasks:
+
+  - name: install unzip
+    package:
+      name: unzip
+
+  - name: install terraform
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/1.6.1/terraform_1.6.1_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      owner: root
+      group: root
+      mode: 0755  
+
+
+- hosts: web_servers
+  become: true
+  tasks:
+
+  - name: Install apache and php packages
+    tags: 
+    - apache
+    - centos
+    - httpd
+    yum: 
+      name: 
+        - httpd
+        - php
+      state: latest
+    when: ansible_distribution == "CentOS"
+
+  - name: Start httpd service (CentOS)
+    tags:
+    - httpd
+    - centos
+    - apache
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+    when: ansible_distribution == "CentOS"
+
+
+  - name: Add firewall rule port 80
+    command: firewall-cmd --add-port=80/tcp
+
+  - name: change e-amil address admin
+    tags: 
+    - apache
+    - centos
+    - httpd
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^ServerAdmin'
+      line: ServerAdmin somebody@somebody.net
+    when: ansible_distribution == "CentOS"
+    register: httpd
+
+  - name: restart httpd (CentOS)
+    tags: apache,centos,httpd
+    service:
+      name: httpd
+      state: restarted
+    when: httpd.changed    
+
+  - name: copy default html file for site
+    tags:
+    - apache
+    - httpd
+    copy:
+      src: /home/cassucena/ansible_repo/files/default_site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode: 0644
+
+- hosts: [db_servers]
+  become: true
+  tasks:
+
+  - name: install mariadb package (CentOS)
+    tags: 
+    - centos
+    - db
+    - mariadb
+    yum:
+      name: mariadb-server
+      state: latest
+    when: ansible_distribution == "CentOS"
+ 
+  - name: Start mariadb service
+    tags: 
+    - db 
+    - mariadb 
+    - centos
+    service:
+      name: mariadb
+      state: started
+    when: ansible_distribution == "CentOS"
+
+- hosts: [file_servers]
+  become: true
+  tasks:
+
+  - name: install samba package
+    package:
+      name: samba
+      state: latest

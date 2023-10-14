@@ -1,0 +1,14 @@
+- name: install mariadb package (CentOS)
+  tags: centos,db,mariadb
+  yum:
+    name: mariadb-server
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: Start mariadb service
+  tags: db,mariadb,centos
+  service:
+    name: mariadb
+    state: started
+  when: ansible_distribution == "CentOS"
+
